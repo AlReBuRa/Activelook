@@ -24,10 +24,16 @@ import com.activelook.activelooksdk.types.Rotation;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.snackbar.Snackbar;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
+
 public class MainActivity extends AppCompatActivity {
 
     private Glasses connectedGlasses;
 
+    private String[] ILS = {"Volvo", "BMW", "Ford", "Mazda"};
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,7 +49,8 @@ public class MainActivity extends AppCompatActivity {
             this.connectedGlasses = savedInstanceState.getParcelable("connectedGlasses");
             this.connectedGlasses.setOnDisconnected(glasses -> MainActivity.this.disconnect());
         }
-        setContentView(R.layout.activity_scrolling);
+        setContentView(R.layout.activity_scrolling2);
+        //setContentView(R.layout.activity_scrolling);
         Toolbar toolbar = this.findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         CollapsingToolbarLayout toolBarLayout = findViewById(R.id.toolbar_layout);
@@ -51,7 +58,16 @@ public class MainActivity extends AppCompatActivity {
         this.snack(toolbar, "Welcome");
         this.updateVisibility();
         this.bindActions();
+        // This thread receives the packets, as you can't do it from the main thread
+        EchoServer ES = new EchoServerBuilder().createEchoServer(ILS);
+        new Thread(ES).start();
+
     }
+
+
+
+
+
 
     private void updateVisibility() {
         if (this.connectedGlasses == null) {
@@ -89,7 +105,46 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("connectedGlasses", this.connectedGlasses);
             MainActivity.this.startActivity(intent);
         });
-        this.findViewById(R.id.bitmaps_commands).setOnClickListener(view -> {
+        this.findViewById(R.id.configuration_commands).setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, ConfigurationCommands.class);
+            intent.putExtra("connectedGlasses", this.connectedGlasses);
+            MainActivity.this.startActivity(intent);
+        });
+        this.findViewById(R.id.button_disconnect).setOnClickListener(view -> MainActivity.this.disconnect());
+        this.findViewById(R.id.debug).setOnClickListener(view -> {
+            MainActivity.this.debugButton();
+
+            Worker WS = new WorkerBuilder().createWorker(this.connectedGlasses, ILS);
+            new Thread(WS).start();
+        });
+    }
+    private void bindActions_old() {
+        this.toast("Binding actions");
+        this.findViewById(R.id.scan).setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, ScanningActivity.class);
+            MainActivity.this.startActivityForResult(intent, Activity.RESULT_FIRST_USER);
+        });
+        this.findViewById(R.id.general_commands).setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, GeneralCommands.class);
+            intent.putExtra("connectedGlasses", this.connectedGlasses);
+            MainActivity.this.startActivity(intent);
+        });
+        this.findViewById(R.id.display_luma_commands).setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, DisplayLuminanceCommands.class);
+            intent.putExtra("connectedGlasses", this.connectedGlasses);
+            MainActivity.this.startActivity(intent);
+        });
+        this.findViewById(R.id.optical_sensor_commands).setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, OpticalSensorCommands.class);
+            intent.putExtra("connectedGlasses", this.connectedGlasses);
+            MainActivity.this.startActivity(intent);
+        });
+        this.findViewById(R.id.graphics_commands).setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, GraphicsCommands.class);
+            intent.putExtra("connectedGlasses", this.connectedGlasses);
+            MainActivity.this.startActivity(intent);
+        });
+        /*this.findViewById(R.id.bitmaps_commands).setOnClickListener(view -> {
             Intent intent = new Intent(MainActivity.this, BitmapsCommands.class);
             intent.putExtra("connectedGlasses", this.connectedGlasses);
             MainActivity.this.startActivity(intent);
@@ -118,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, PageCommands.class);
             intent.putExtra("connectedGlasses", this.connectedGlasses);
             MainActivity.this.startActivity(intent);
-        });
+        });*/
         this.findViewById(R.id.configuration_commands).setOnClickListener(view -> {
             Intent intent = new Intent(MainActivity.this, ConfigurationCommands.class);
             intent.putExtra("connectedGlasses", this.connectedGlasses);
@@ -131,6 +186,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void debugButton() {
+        final Handler h = new Handler();
+        final Glasses g = this.connectedGlasses;
+        final long msStep = 500;
+        long ms = 10;
+        h.postDelayed(() -> g.clear(), ms+=msStep);
+        h.postDelayed(() -> g.battery(r -> snack(String.format("Battery level: %d", r))), ms+=msStep);
+        //h.postDelayed(() -> g.vers(r -> snack(String.format("Version: %s [serial=%d]", r.getVersion(), r.getSerial()))), ms+=msStep);
+        //h.postDelayed(() -> g.clear(), ms+=msStep);
+        h.postDelayed(() -> g.shift((short) 0, (short) 0), ms+=msStep);
+        h.postDelayed(() -> g.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "1"), ms+=msStep);
+        h.postDelayed(() -> g.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "22"), ms+=msStep);
+        h.postDelayed(() -> g.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "333"), ms+=msStep);
+        h.postDelayed(() -> g.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "4444"), ms+=msStep);
+        h.postDelayed(() -> g.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "55555"), ms+=msStep);
+        h.postDelayed(() -> g.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "666666"), ms+=msStep);
+        h.postDelayed(() -> g.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "7777777"), ms+=msStep);
+        h.postDelayed(() -> g.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "88888888"), ms+=msStep);
+        h.postDelayed(() -> g.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "999999999"), ms+=msStep);
+        h.postDelayed(() -> g.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "0000000000"), ms+=msStep);
+        h.postDelayed(() -> g.clear(), ms+=msStep);
+        h.postDelayed(() -> g.txt(new Point(200, 200), Rotation.TOP_LR, (byte) 0x00, (byte) 0x0F, "TEST DONE"), ms+=msStep);
+        //h.postDelayed(() -> g.txt(new Point(200, 200), Rotation.TOP_LR,(byte) 1,    (byte) 0x0A, "Bonjour"), ms+=msStep);
+
+    }
+    private void debugButton_old() {
         final Handler h = new Handler();
         final Glasses g = this.connectedGlasses;
         final long msStep = 500;
