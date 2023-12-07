@@ -1,59 +1,132 @@
 package com.activelook.demo;
 
 import android.graphics.Point;
+import android.os.Build;
 import android.os.Handler;
-
 import com.activelook.activelooksdk.Glasses;
 import com.activelook.activelooksdk.types.Rotation;
+import org.json.JSONObject;
 
-import java.util.concurrent.TimeUnit;
+import java.text.DecimalFormat;
+
+import kotlin.random.Random;
 
 public class Worker  extends Thread{
-    private String[] ils;
+    private JSONObject ils;
     private final Handler h = new Handler();
     private Glasses connectedGlasses;
-    public Worker(final Glasses g, String[] _ils){
+    public Worker(final Glasses g, JSONObject _ils){
         this.connectedGlasses = g;
         this.ils = _ils;
     }
     @Override
     public void run(){
-
-        final long msStep = 500;
+        String Var1 = "";
+        final long msStep = 200;
         long ms = 10;
+        //Random rand = null;
+        float Var1_random = 12.0F;
+        float Var2_random = 36.0F;
+        float Var3_random = -145.0F;
+        float Var4_random = 52.0F;
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(1);
         h.postDelayed(() -> connectedGlasses.clear(), ms+=msStep);
-        while (true){
+        while (true) {
+
+            Var1_random += 0.03;
+            if(Var1_random > 16.5F) {
+                Var1_random = 12.0F;
+            }
+            Var2_random += 0.03;
+            if(Var2_random > 43.5F) {
+                Var2_random = 36.0F;
+            }
+
+            Var3_random += 0.01;
+            if(Var3_random > -148.3F) {
+                Var3_random = -141.0F;
+            }
+
+            Var4_random += 0.02;
+            if(Var4_random > 29.5F) {
+                Var4_random = 26.0F;
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+                String finalFloat_random = df.format(Var1_random);
+                connectedGlasses.txt(new Point(300, 100), Rotation.TOP_LR, (byte) 1, (byte) 0x0F, "TWS");
+                connectedGlasses.txt(new Point(300, 70), Rotation.TOP_LR, (byte) 3, (byte) 0x0F, finalFloat_random);
+                finalFloat_random = df.format(Var2_random);
+                connectedGlasses.txt(new Point(150, 100), Rotation.TOP_LR, (byte) 1, (byte) 0x0F, "BSP");
+                connectedGlasses.txt(new Point(150, 70), Rotation.TOP_LR, (byte) 3, (byte) 0x0F, finalFloat_random);
+                finalFloat_random = df.format(Var3_random);
+                connectedGlasses.txt(new Point(150, 200), Rotation.TOP_LR, (byte) 1, (byte) 0x0F, "TWA");
+                connectedGlasses.txt(new Point(160, 180), Rotation.TOP_LR, (byte) 3, (byte) 0x0F, finalFloat_random);
+                finalFloat_random = df.format(Var4_random);
+                connectedGlasses.txt(new Point(300, 200), Rotation.TOP_LR, (byte) 1, (byte) 0x0F, "AWA");
+                connectedGlasses.txt(new Point(300, 180), Rotation.TOP_LR, (byte) 3, (byte) 0x0F, finalFloat_random);
+                //System.out.println("random: " + finalFloat_random);
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+
+            /*try {
+                Var1 = ils.getString("TopAwsMeas");
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
             //h.postDelayed(() -> connectedGlasses.clear(), ms+=msStep);
-            h.postDelayed(() -> connectedGlasses.txt(new Point(200, 200), Rotation.TOP_LR, (byte) 0x00, (byte) 0x0F, "val: " + ils[3]), ms+=0);
-            System.out.println("val: " + ils[3]);
+            String finalVar = Var1;
+            h.postDelayed(() -> connectedGlasses.txt(new Point(200, 200), Rotation.TOP_LR, (byte) 0x00, (byte) 0x0F, "val: " + finalVar), ms+=0);
+            System.out.println("val: " + Var1);
             try {
                 Thread.sleep( TimeUnit.SECONDS.toMillis( 3 ) );
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
-            }
-        }
-        /*final Handler h = new Handler();
-        //final Glasses g = this.connectedGlasses;
-        final long msStep = 500;
-        long ms = 10;
+            }*/
 
-        h.postDelayed(() -> connectedGlasses.clear(), ms+=msStep);
-        //h.postDelayed(() -> g.battery(r -> snack(String.format("Battery level: %d", r))), ms+=msStep);
-        //h.postDelayed(() -> g.vers(r -> snack(String.format("Version: %s [serial=%d]", r.getVersion(), r.getSerial()))), ms+=msStep);
-        //h.postDelayed(() -> g.clear(), ms+=msStep);
-        h.postDelayed(() -> connectedGlasses.shift((short) 0, (short) 0), ms+=msStep);
-        h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "1"), ms+=msStep);
-        h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "22"), ms+=msStep);
-        h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "333"), ms+=msStep);
-        h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "4444"), ms+=msStep);
-        h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "55555"), ms+=msStep);
-        h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "666666"), ms+=msStep);
-        h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "7777777"), ms+=msStep);
-        h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "88888888"), ms+=msStep);
-        h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "999999999"), ms+=msStep);
-        h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "0000000000"), ms+=msStep);
-        h.postDelayed(() -> connectedGlasses.clear(), ms+=msStep);
-        h.postDelayed(() -> connectedGlasses.txt(new Point(200, 200), Rotation.TOP_LR, (byte) 0x00, (byte) 0x0F, "TEST DONE"), ms+=msStep);*/
+            //Var1_random = rand.nextFloat();
+            /*DateTimeFormatter dtf;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
+            } else {
+                dtf = null;
+            }
+            LocalDateTime now;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                now = LocalDateTime.now();
+            } else {
+                now = null;
+            }
+*/
+
+
+
+            /*
+            h.postDelayed(() -> connectedGlasses.clear(), ms += msStep);
+            //h.postDelayed(() -> g.battery(r -> snack(String.format("Battery level: %d", r))), ms+=msStep);
+            //h.postDelayed(() -> g.vers(r -> snack(String.format("Version: %s [serial=%d]", r.getVersion(), r.getSerial()))), ms+=msStep);
+            //h.postDelayed(() -> g.clear(), ms+=msStep);
+            h.postDelayed(() -> connectedGlasses.shift((short) 0, (short) 0), ms += msStep);
+            h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "1"), ms += msStep);
+            h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "22"), ms += msStep);
+            h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "333"), ms += msStep);
+            h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "4444"), ms += msStep);
+            h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "55555"), ms += msStep);
+            h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "666666"), ms += msStep);
+            h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "7777777"), ms += msStep);
+            h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "88888888"), ms += msStep);
+            h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "999999999"), ms += msStep);
+            h.postDelayed(() -> connectedGlasses.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "0000000000"), ms += msStep);
+            h.postDelayed(() -> connectedGlasses.clear(), ms += msStep);
+            h.postDelayed(() -> connectedGlasses.txt(new Point(200, 200), Rotation.TOP_LR, (byte) 0x00, (byte) 0x0F, "TEST DONE"), ms += msStep);
+            */
+        }
     }
 
 }

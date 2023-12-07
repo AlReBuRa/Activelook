@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -24,16 +25,21 @@ import com.activelook.activelooksdk.types.Rotation;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.snackbar.Snackbar;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
     private Glasses connectedGlasses;
 
-    private String[] ILS = {"Volvo", "BMW", "Ford", "Mazda"};
+    private JSONObject ILSobject;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,12 +61,36 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         CollapsingToolbarLayout toolBarLayout = findViewById(R.id.toolbar_layout);
         toolBarLayout.setTitle(getTitle());
-        this.snack(toolbar, "Welcome");
+        //this.snack(toolbar, "Welcome");
+        //this.connectedGlasses.battery(r -> snack(String.format("Battery level: %d", r)));
         this.updateVisibility();
         this.bindActions();
         // This thread receives the packets, as you can't do it from the main thread
-        EchoServer ES = new EchoServerBuilder().createEchoServer(ILS);
+        EchoServer ES = new EchoServerBuilder().createEchoServer(ILSobject);
         new Thread(ES).start();
+
+
+        /*TextView txtils = findViewById(R.id.txt_ils);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        txtils.setText("test");
+                        String onevalue = null;
+                        try {
+                            onevalue = ILSobject.getString("TopAwsMeas");
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+                        txtils.setText(onevalue);
+                    }
+                });
+            }
+        });
+*/
 
     }
 
@@ -83,6 +113,10 @@ public class MainActivity extends AppCompatActivity {
         this.toast("Binding actions");
         this.findViewById(R.id.scan).setOnClickListener(view -> {
             Intent intent = new Intent(MainActivity.this, ScanningActivity.class);
+            MainActivity.this.startActivityForResult(intent, Activity.RESULT_FIRST_USER);
+        });
+        this.findViewById(R.id.view).setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, IlsActivity.class);
             MainActivity.this.startActivityForResult(intent, Activity.RESULT_FIRST_USER);
         });
         this.findViewById(R.id.general_commands).setOnClickListener(view -> {
@@ -112,9 +146,9 @@ public class MainActivity extends AppCompatActivity {
         });
         this.findViewById(R.id.button_disconnect).setOnClickListener(view -> MainActivity.this.disconnect());
         this.findViewById(R.id.debug).setOnClickListener(view -> {
-            MainActivity.this.debugButton();
+            //MainActivity.this.debugButton();
 
-            Worker WS = new WorkerBuilder().createWorker(this.connectedGlasses, ILS);
+            Worker WS = new WorkerBuilder().createWorker(this.connectedGlasses, ILSobject);
             new Thread(WS).start();
         });
     }

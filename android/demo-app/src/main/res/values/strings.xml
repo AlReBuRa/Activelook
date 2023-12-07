@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">My Active Look Application</string>
+    <string name="app_name">ARBR ActiveLook</string>
     <string name="large_text">
         "This is the Active Look Sample Code App.\n\n"
 
@@ -8,6 +8,7 @@
     </string>
     <string name="action_settings">Settings</string>
     <string name="button_scan">Scan</string>
+    <string name="button_view">View</string>
     <string name="bubble_button">Bubble button</string>
 
     <string name="app_version">v1.4</string>

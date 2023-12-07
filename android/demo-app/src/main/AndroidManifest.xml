@@ -28,6 +28,7 @@
             android:theme="@style/Theme.MyActiveLookApplication"
             android:exported="true">
         </activity>
+        <activity android:name=".IlsActivity"></activity>
         <activity android:name=".GeneralCommands"></activity>
         <activity android:name=".DisplayLuminanceCommands"></activity>
         <activity android:name=".OpticalSensorCommands"></activity>

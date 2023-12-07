@@ -1,7 +1,9 @@
 package com.activelook.demo;
 
+import org.json.JSONObject;
+
 public class EchoServerBuilder {
-    public EchoServer createEchoServer(String[] _ils) {
+    public EchoServer createEchoServer(JSONObject _ils) {
         return new EchoServer(_ils);
     }
 }
