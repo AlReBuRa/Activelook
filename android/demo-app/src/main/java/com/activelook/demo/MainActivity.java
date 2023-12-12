@@ -25,6 +25,7 @@ import com.activelook.activelooksdk.types.Rotation;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.snackbar.Snackbar;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -32,14 +33,17 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Glasses connectedGlasses;
+    public static Glasses connectedGlasses;
+    static int a = 0;
 
-    private JSONObject ILSobject;
+    public static volatile JSONObject ILSobject;
+    private volatile String IlsData;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,7 +52,10 @@ public class MainActivity extends AppCompatActivity {
          * Check location permission (needed for BLE scan)
          */
         ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.BLUETOOTH_CONNECT,Manifest.permission.BLUETOOTH_SCAN},
+                new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.BLUETOOTH_CONNECT,
+                        Manifest.permission.BLUETOOTH_SCAN},
                 0);
 
         if (savedInstanceState != null && ((DemoApp) this.getApplication()).isConnected()) {
@@ -65,38 +72,24 @@ public class MainActivity extends AppCompatActivity {
         //this.connectedGlasses.battery(r -> snack(String.format("Battery level: %d", r)));
         this.updateVisibility();
         this.bindActions();
+        IlsData = new String();
+        ILSobject = new JSONObject();
         // This thread receives the packets, as you can't do it from the main thread
-        EchoServer ES = new EchoServerBuilder().createEchoServer(ILSobject);
+        /*EchoServer ES = new EchoServerBuilder().createEchoServer(IlsData);
         new Thread(ES).start();
-
-
-        /*TextView txtils = findViewById(R.id.txt_ils);
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        txtils.setText("test");
-                        String onevalue = null;
-                        try {
-                            onevalue = ILSobject.getString("TopAwsMeas");
-                        } catch (JSONException e) {
-                            throw new RuntimeException(e);
-                        }
-                        txtils.setText(onevalue);
-                    }
-                });
-            }
-        });
-*/
-
+         */
+        Runnable UDPmulticast = new UdpServer(this.IlsData);
+        /*try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }*/
+        Runnable GlassMan = new GlasseStrem(this.IlsData);
+        Thread UdpThread = new Thread(UDPmulticast, "UDPthread");
+        Thread GlassThread = new Thread(GlassMan, "Glass_thread");
+        UdpThread.start();
+        GlassThread.start();
     }
-
-
-
-
 
 
     private void updateVisibility() {
@@ -148,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
         this.findViewById(R.id.debug).setOnClickListener(view -> {
             //MainActivity.this.debugButton();
 
-            Worker WS = new WorkerBuilder().createWorker(this.connectedGlasses, ILSobject);
+            Worker WS = new WorkerBuilder().createWorker(this.connectedGlasses, ILSobject, IlsData);
             new Thread(WS).start();
         });
     }
@@ -414,5 +407,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return snack;
     }
+
 
 }

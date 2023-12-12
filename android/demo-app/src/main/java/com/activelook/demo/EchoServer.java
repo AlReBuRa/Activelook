@@ -16,13 +16,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 public class EchoServer extends Thread {
     private boolean running;
-    private JSONObject ils;
+    public volatile String IlsData;
     private Handler hd;
     private MulticastSocket socket = null;
     private InetAddress group = null;
-    public EchoServer(JSONObject _ils) {
+    public EchoServer(String _ils) {
         //hd = msgHandler;
-        this.ils = _ils;
+        this.IlsData = _ils;
         try {
             //socket = new DatagramSocket(10563);
             socket = new MulticastSocket(10562);
@@ -52,10 +52,10 @@ public class EchoServer extends Thread {
                 System.out.println(e);
                 throw new RuntimeException(e);
             }
+            IlsData = new String(buf, StandardCharsets.UTF_8);
+
             try {
-                String str = new String(buf, StandardCharsets.UTF_8);
-                ils = new JSONObject(str);
-                //ils[3] = ils.getString("TopAwsMeas");
+                JSONObject ils = new JSONObject(IlsData);
                 System.out.println("*TopAwsMeas: " + ils.getString("TopAwsMeas"));
             } catch (JSONException e) {
                 throw new RuntimeException(e);
@@ -68,3 +68,6 @@ public class EchoServer extends Thread {
     }
 
 }
+
+
+
