@@ -16,7 +16,6 @@ public class UdpServer implements Runnable {
 
     // The count member variable is shared between multiple threads
     // that are executing the same instance of the MyTask runnable.
-    private int count = 0;
     private Object object;
     private JSONObject ILSobject;
     private String strData;
@@ -50,7 +49,6 @@ public class UdpServer implements Runnable {
         InetAddress group = null;
 
         try {
-            //socket = new DatagramSocket(10563);
             socket = new MulticastSocket(10562);
             group = InetAddress.getByName("239.255.255.255");
             socket.joinGroup(group);
@@ -89,12 +87,5 @@ public class UdpServer implements Runnable {
 
         }
         socket.close();
-
-        /*// i is a local variable created on the thread stack of the current thread
-        for (int i = 0; i < 42_000; i++) {
-            this.count++;
-        }
-        System.out.printf("[%s] Count: %d\n", threadName, this.count);
-         */
     }
 }
