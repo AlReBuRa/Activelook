@@ -4,16 +4,17 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Point;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -25,25 +26,15 @@ import com.activelook.activelooksdk.types.Rotation;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.snackbar.Snackbar;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
     public static Glasses connectedGlasses;
-    static int a = 0;
-
     public static volatile JSONObject ILSobject;
     private volatile String IlsData;
+    @RequiresApi(api = Build.VERSION_CODES.S)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,9 +44,15 @@ public class MainActivity extends AppCompatActivity {
          */
         ActivityCompat.requestPermissions(this,
                 new String[]{
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.WAKE_LOCK,
+                        Manifest.permission.BLUETOOTH,
+                        Manifest.permission.BLUETOOTH_ADMIN,
                         Manifest.permission.BLUETOOTH_CONNECT,
-                        Manifest.permission.BLUETOOTH_SCAN},
+                        Manifest.permission.BLUETOOTH_SCAN,
+                        Manifest.permission.BLUETOOTH_PRIVILEGED
+                },
                 0);
 
         if (savedInstanceState != null && ((DemoApp) this.getApplication()).isConnected()) {
@@ -75,15 +72,7 @@ public class MainActivity extends AppCompatActivity {
         IlsData = new String();
         ILSobject = new JSONObject();
         // This thread receives the packets, as you can't do it from the main thread
-        /*EchoServer ES = new EchoServerBuilder().createEchoServer(IlsData);
-        new Thread(ES).start();
-         */
         Runnable UDPmulticast = new UdpServer(this.IlsData);
-        /*try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }*/
         Runnable GlassMan = new GlasseStrem(this.IlsData);
         Thread UdpThread = new Thread(UDPmulticast, "UDPthread");
         Thread GlassThread = new Thread(GlassMan, "Glass_thread");
