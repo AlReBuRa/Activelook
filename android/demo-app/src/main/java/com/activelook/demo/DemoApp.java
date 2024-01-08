@@ -56,7 +56,7 @@ public class DemoApp extends Application {
                                 final Consumer<GlassesUpdate> onUpdateProgress,
                                 final Consumer<GlassesUpdate> onUpdateSuccess,
                                 final Consumer<GlassesUpdate> onUpdateError) {
-        this.onUpdateStart = onUpdateStart;
+        this.onUpdateStart = null;
         this.onUpdateAvailableCallback = onUpdateAvailableCallback;
         this.onUpdateProgress = onUpdateProgress;
         this.onUpdateSuccess = onUpdateSuccess;

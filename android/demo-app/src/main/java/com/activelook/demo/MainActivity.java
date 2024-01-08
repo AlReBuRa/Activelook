@@ -1,5 +1,6 @@
 package com.activelook.demo;
 
+
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
@@ -28,12 +29,19 @@ import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class MainActivity extends AppCompatActivity {
 
     public static Glasses connectedGlasses;
-    public static volatile JSONObject ILSobject;
-    private volatile String IlsData;
+    public static volatile JSONObject IlsObject = null;
+    public static Boolean IsMulticastConnected = false;
+    public static volatile List<String> UserlistOfVariables;
+
+
+
     @RequiresApi(api = Build.VERSION_CODES.S)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,40 +67,52 @@ public class MainActivity extends AppCompatActivity {
             this.connectedGlasses = savedInstanceState.getParcelable("connectedGlasses");
             this.connectedGlasses.setOnDisconnected(glasses -> MainActivity.this.disconnect());
         }
-        setContentView(R.layout.activity_scrolling2);
-        //setContentView(R.layout.activity_scrolling);
+        //setContentView(R.layout.activity_scrolling2);
+        setContentView(R.layout.activity_scrolling);
         Toolbar toolbar = this.findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         CollapsingToolbarLayout toolBarLayout = findViewById(R.id.toolbar_layout);
         toolBarLayout.setTitle(getTitle());
-        //this.snack(toolbar, "Welcome");
-        //this.connectedGlasses.battery(r -> snack(String.format("Battery level: %d", r)));
         this.updateVisibility();
         this.bindActions();
-        IlsData = new String();
-        ILSobject = new JSONObject();
-        // This thread receives the packets, as you can't do it from the main thread
-        Runnable UDPmulticast = new UdpServer(this.IlsData);
-        Runnable GlassMan = new GlasseStrem(this.IlsData);
-        Thread UdpThread = new Thread(UDPmulticast, "UDPthread");
-        Thread GlassThread = new Thread(GlassMan, "Glass_thread");
+        IlsObject = new JSONObject();
+        UserlistOfVariables = new ArrayList<>();
+        UserlistOfVariables.add("BspTarget");
+        UserlistOfVariables.add("TWA");
+        UserlistOfVariables.add("Roll");
+        UserlistOfVariables.add("BSP");
+
+
+        UdpServer UdpMulticast = new UdpServer(this);
+        ((UdpServer) UdpMulticast).open("239.255.255.255", 29200, 2000);
+        Thread UdpThread = new Thread(UdpMulticast, "UDP_multicast_thread");
         UdpThread.start();
+
+        Runnable GlassMan = new GlassStream();
+        Thread GlassThread = new Thread(GlassMan, "Glass_thread");
         GlassThread.start();
+
     }
+
 
 
     private void updateVisibility() {
         if (this.connectedGlasses == null) {
             this.findViewById(R.id.connected_content).setVisibility(View.GONE);
             this.findViewById(R.id.disconnected_content).setVisibility(View.VISIBLE);
+            //MainActivity.this.finishActivity();
         } else {
             this.findViewById(R.id.connected_content).setVisibility(View.VISIBLE);
             this.findViewById(R.id.disconnected_content).setVisibility(View.GONE);
+
+            //Intent intent = new Intent(MainActivity.this, ConnectActivity.class);
+            //intent.putExtra("connectedGlasses", this.connectedGlasses);
+            //startActivity(intent);
+            //MainActivity.this.startActivityForResult(intent, Activity.RESULT_FIRST_USER);
         }
     }
 
     private void bindActions() {
-        this.toast("Binding actions");
         this.findViewById(R.id.scan).setOnClickListener(view -> {
             Intent intent = new Intent(MainActivity.this, ScanningActivity.class);
             MainActivity.this.startActivityForResult(intent, Activity.RESULT_FIRST_USER);
@@ -126,79 +146,18 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("connectedGlasses", this.connectedGlasses);
             MainActivity.this.startActivity(intent);
         });
-        this.findViewById(R.id.button_disconnect).setOnClickListener(view -> MainActivity.this.disconnect());
-        this.findViewById(R.id.debug).setOnClickListener(view -> {
+
+
+        this.findViewById(R.id.button_disconnect).setOnClickListener(view -> {
+            MainActivity.this.disconnect();
+        });
+
+        //this.findViewById(R.id.debug).setOnClickListener(view -> {
             //MainActivity.this.debugButton();
 
-            Worker WS = new WorkerBuilder().createWorker(this.connectedGlasses, ILSobject, IlsData);
-            new Thread(WS).start();
-        });
-    }
-    private void bindActions_old() {
-        this.toast("Binding actions");
-        this.findViewById(R.id.scan).setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this, ScanningActivity.class);
-            MainActivity.this.startActivityForResult(intent, Activity.RESULT_FIRST_USER);
-        });
-        this.findViewById(R.id.general_commands).setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this, GeneralCommands.class);
-            intent.putExtra("connectedGlasses", this.connectedGlasses);
-            MainActivity.this.startActivity(intent);
-        });
-        this.findViewById(R.id.display_luma_commands).setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this, DisplayLuminanceCommands.class);
-            intent.putExtra("connectedGlasses", this.connectedGlasses);
-            MainActivity.this.startActivity(intent);
-        });
-        this.findViewById(R.id.optical_sensor_commands).setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this, OpticalSensorCommands.class);
-            intent.putExtra("connectedGlasses", this.connectedGlasses);
-            MainActivity.this.startActivity(intent);
-        });
-        this.findViewById(R.id.graphics_commands).setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this, GraphicsCommands.class);
-            intent.putExtra("connectedGlasses", this.connectedGlasses);
-            MainActivity.this.startActivity(intent);
-        });
-        /*this.findViewById(R.id.bitmaps_commands).setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this, BitmapsCommands.class);
-            intent.putExtra("connectedGlasses", this.connectedGlasses);
-            MainActivity.this.startActivity(intent);
-        });
-        this.findViewById(R.id.viewer_commands).setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this, ViewerCommands.class);
-            intent.putExtra("connectedGlasses", this.connectedGlasses);
-            MainActivity.this.startActivity(intent);
-        });
-        this.findViewById(R.id.font_commands).setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this, FontCommands.class);
-            intent.putExtra("connectedGlasses", this.connectedGlasses);
-            MainActivity.this.startActivity(intent);
-        });
-        this.findViewById(R.id.layouts_commands).setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this, LayoutsCommands.class);
-            intent.putExtra("connectedGlasses", this.connectedGlasses);
-            MainActivity.this.startActivity(intent);
-        });
-        this.findViewById(R.id.gauge_commands).setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this, GaugeCommands.class);
-            intent.putExtra("connectedGlasses", this.connectedGlasses);
-            MainActivity.this.startActivity(intent);
-        });
-        this.findViewById(R.id.page_commands).setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this, PageCommands.class);
-            intent.putExtra("connectedGlasses", this.connectedGlasses);
-            MainActivity.this.startActivity(intent);
-        });*/
-        this.findViewById(R.id.configuration_commands).setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this, ConfigurationCommands.class);
-            intent.putExtra("connectedGlasses", this.connectedGlasses);
-            MainActivity.this.startActivity(intent);
-        });
-        this.findViewById(R.id.button_disconnect).setOnClickListener(view -> MainActivity.this.disconnect());
-        this.findViewById(R.id.debug).setOnClickListener(view -> {
-            MainActivity.this.debugButton();
-        });
+            //Worker WS = new WorkerBuilder().createWorker(this.connectedGlasses, IlsObject, IlsData);
+            //new Thread(WS).start();
+        //});
     }
 
     private void debugButton() {
@@ -208,8 +167,8 @@ public class MainActivity extends AppCompatActivity {
         long ms = 10;
         h.postDelayed(() -> g.clear(), ms+=msStep);
         h.postDelayed(() -> g.battery(r -> snack(String.format("Battery level: %d", r))), ms+=msStep);
-        //h.postDelayed(() -> g.vers(r -> snack(String.format("Version: %s [serial=%d]", r.getVersion(), r.getSerial()))), ms+=msStep);
-        //h.postDelayed(() -> g.clear(), ms+=msStep);
+        h.postDelayed(() -> g.vers(r -> snack(String.format("Version: %s [serial=%d]", r.getVersion(), r.getSerial()))), ms+=msStep);
+        h.postDelayed(() -> g.clear(), ms+=msStep);
         h.postDelayed(() -> g.shift((short) 0, (short) 0), ms+=msStep);
         h.postDelayed(() -> g.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "1"), ms+=msStep);
         h.postDelayed(() -> g.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "22"), ms+=msStep);
@@ -223,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
         h.postDelayed(() -> g.txt(new Point(10, 100), Rotation.TOP_RL, (byte) 0x00, (byte) 0x0F, "0000000000"), ms+=msStep);
         h.postDelayed(() -> g.clear(), ms+=msStep);
         h.postDelayed(() -> g.txt(new Point(200, 200), Rotation.TOP_LR, (byte) 0x00, (byte) 0x0F, "TEST DONE"), ms+=msStep);
-        //h.postDelayed(() -> g.txt(new Point(200, 200), Rotation.TOP_LR,(byte) 1,    (byte) 0x0A, "Bonjour"), ms+=msStep);
+        h.postDelayed(() -> g.txt(new Point(200, 200), Rotation.TOP_LR,(byte) 1,    (byte) 0x0A, "Bonjour"), ms+=msStep);
 
     }
     private void debugButton_old() {
@@ -367,7 +326,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private Toast toast(Object data) {
+    public Toast toast(Object data) {
         Log.d("MainActivity", data.toString());
         Toast toast = Toast.makeText(this, data.toString(), Toast.LENGTH_LONG);
         toast.show();
