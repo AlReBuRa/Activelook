@@ -76,10 +76,11 @@ public class ScanningActivity extends AppCompatActivity {
             device.connect(glasses -> {
                 if (glasses.isFirmwareAtLeast("4.0")) {
                     if (glasses.compareFirmwareVersion("4.0") > 0) {
-                        runOnUiThread(() ->
+                        /*runOnUiThread(() ->
                             Toast.makeText(ScanningActivity.this, "Your glasses have a more recent " +
                                     "firmware. Check the store for an update of this application",
                                     Toast.LENGTH_LONG).show());
+                         */
                     }
                     Intent returnIntent = new Intent();
                     returnIntent.putExtra("connectedGlasses", glasses);
@@ -136,8 +137,8 @@ public class ScanningActivity extends AppCompatActivity {
         this.logText(glassesUpdate);
     }
     private void onUpdateError(final GlassesUpdate glassesUpdate) {
-        Toast.makeText(this, "Error while trying to connect", Toast.LENGTH_SHORT).show();
-        this.logText(glassesUpdate);
+        //Toast.makeText(this, "Error while trying to connect", Toast.LENGTH_SHORT).show();
+        //this.logText(glassesUpdate);
         this.onResume();
     }
 
